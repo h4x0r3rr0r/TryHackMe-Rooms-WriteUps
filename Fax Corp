@@ -1,0 +1,63 @@
+Fax Cormp Room Write-Up
+
+Initial Enumeration
+
+**Nmap Scan**
+Commencing the assessment with an Nmap scan, 
+we identified three open ports on the target machine:
+
+FTP (21)
+SSH (22)
+HTTP (80)
+FTP Section
+FTP Credentials
+While FTP required credentials, we discovered a promising lead on the HTTP service.
+
+**Web Section**
+Web Directory Bruteforcing
+Conducting a normal and with extentions directory bruteforcing on the HTTP service with some extenstins like txt,bak,html,php etc, we found several directories, 
+including "wp-admin," "wp-login.php," and "communications.txt." Accessing "communications.txt," we obtained FTP credentials.
+
+WordPress Credentials
+Utilizing the acquired FTP credentials, we logged into the FTP server and downloaded a text file containing a WordPress username. 
+Attempts to log into the WordPress admin panel failed initially, but confirmation from the manager assured the correctness of the username.
+
+WordPress Brute Force
+To bypass the login challenge, we utilized the "wpscan" tool for a brute-force attack on the WordPress login page, 
+employing the obtained username and a password list. The successful outcome granted access to the WordPress admin dashboard.
+
+PHP Reverse Shell
+Within the admin dashboard, we identified the installed theme as "Twenty Seventeen." Leveraging the theme editor, 
+we modified "404.php" with a PHP reverse shell. 
+Setting up a netcat listener on the attacker machine, we triggered the reverse shell by accessing the modified 
+URL: "http://machine_ip/wp-content/themes/twentyseventeen/404.php."
+
+Web Server Access
+Post-execution, we obtained a shell with the "www-data" user. 
+Stabilizing the shell, further exploration led to the discovery of "web.txt" in the "/var" directory and a file named "to-do-list-for-john."
+
+
+
+**User Privilege Escalation**
+SSH Private Key
+Reviewing the contents of "to-do-list-for-john," we found file paths to backup files. 
+One of these files contained an SSH private key and username. 
+After saving the key, we adjusted its permissions using "chmod 600 rsa_key."
+
+SSH Login
+We logged in using SSH with the obtained private key:
+ssh -i rsa_key whoami@machine_ip
+This granted access to the user's home directory, and we located the "user.txt" flag.
+
+Root Privilege Escalation
+SUID Binary
+Further investigation, facilitated by enumeration tools such as "leanpeas" or "linenum," revealed a binary file with SUID (Set User ID) permissions. 
+Referring to GTFOBins, we identified a manipulation technique for this binary.
+
+Root Shell
+Executing the provided GTFOBins instructions, we successfully obtained a root shell. In the "/root" directory, we found the "root.txt" flag.
+
+Conclusion
+This penetration test showcased the significance of comprehensive enumeration and sequential exploitation for a successful compromise. 
+The combination of FTP, web, and SSH exploitation techniques, coupled with careful privilege escalation,
+resulted in a successful penetration from initial access to obtaining root privileges.
